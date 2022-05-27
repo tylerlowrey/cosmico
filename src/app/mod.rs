@@ -3,12 +3,14 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+use winit::window::Fullscreen;
 use crate::core::state::State;
 
 pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
+    window.set_fullscreen(Some(Fullscreen::Borderless(None)));
     window.set_cursor_grab(true);
     window.set_cursor_visible(true);
 
@@ -22,7 +24,7 @@ pub async fn run() {
             state.update();
             match state.render() {
                 Ok(_) => { },
-                Err(wgpu::SurfaceError::Lost) => state.resize(state.size),
+                Err(wgpu::SurfaceError::Lost) => state.resize(state.wgpu.size()),
                 Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                 Err(e) => eprintln!("{:?}", e)
             }
