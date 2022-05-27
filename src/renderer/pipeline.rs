@@ -1,4 +1,4 @@
-use wgpu::{Device, PipelineLayout, ShaderModule};
+use wgpu::{Device, PipelineLayout, ShaderModule, VertexAttribute};
 use bytemuck::{ Pod, Zeroable };
 
 #[repr(C)]
@@ -9,22 +9,12 @@ pub struct Vertex {
 }
 
 impl Vertex {
+    const VERTEX_BUFFER_ATTRIBUTES: [VertexAttribute; 2] = vertex_attr_array![0 => Float32x3, 1 => Float32x2];
     fn buffer_layout_description<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x2,
-                }
-            ]
+            attributes: &Self::VERTEX_BUFFER_ATTRIBUTES
         }
     }
 }

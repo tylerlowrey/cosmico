@@ -24,7 +24,7 @@ pub async fn run() {
             state.update();
             match state.render() {
                 Ok(_) => { },
-                Err(wgpu::SurfaceError::Lost) => state.resize(state.wgpu.size()),
+                Err(wgpu::SurfaceError::Lost) => state.resize(state.wgpu.size),
                 Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                 Err(e) => eprintln!("{:?}", e)
             }
