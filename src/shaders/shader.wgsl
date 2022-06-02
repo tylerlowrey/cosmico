@@ -21,7 +21,7 @@ fn vertex_shader_main(
 ) -> VertexOutput {
     var outVertex: VertexOutput;
     outVertex.texture_coordinates = model.texture_coordinates;
-    outVertex.clip_position = camera.view_projection * vec4<f32>(model.position, 1.0);
+    outVertex.clip_position = vec4<f32>(model.position, 1.0);
     return outVertex;
 }
 
