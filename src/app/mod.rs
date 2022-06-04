@@ -42,6 +42,7 @@ pub async fn run() {
         "update",
        SystemStage::parallel()
            .with_system(core::systems::counter)
+           .with_system(core::systems::camera_control)
         )
         .add_stage(
             "render",

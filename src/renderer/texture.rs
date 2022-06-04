@@ -29,7 +29,7 @@ impl Texture {
                 // All textures are stored as 3D, we represent our 2D texture
                 // by setting depth to 1.
                 size: texture_size,
-                mip_level_count: 1, // We'll talk about this a little later
+                mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
                 // Most images are stored using sRGB so we need to reflect that here.

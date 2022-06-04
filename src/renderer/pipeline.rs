@@ -1,5 +1,6 @@
 use wgpu::{Device, PipelineLayout, ShaderModule, VertexAttribute, vertex_attr_array};
 use bytemuck::{ Pod, Zeroable };
+use glam::Mat4;
 use crate::renderer::texture::Texture;
 
 #[repr(C)]
@@ -24,11 +25,13 @@ pub struct RenderPipeline {
     pub wgpu_render_pipeline: wgpu::RenderPipeline,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
-    pub num_vertices: u32,
     pub num_indices: u32,
     pub diffuse_bind_group: wgpu::BindGroup,
     pub diffuse_bind_group_layout: wgpu::BindGroupLayout,
     pub diffuse_texture: Texture,
+    pub camera_bind_group: wgpu::BindGroup,
+    pub camera_bind_group_layout: wgpu::BindGroupLayout,
+    pub camera_buffer: wgpu::Buffer
 }
 
 pub fn create_wgpu_render_pipeline(pipeline_layout: PipelineLayout, shader: ShaderModule, device: &Device,

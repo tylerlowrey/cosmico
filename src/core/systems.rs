@@ -1,6 +1,8 @@
 use bevy_ecs::prelude::*;
-use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
-use wgpu::util::DeviceExt;
+use glam::Vec3;
+use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, Queue, ShaderStages, Surface, SurfaceConfiguration};
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use crate::renderer::camera::{Camera, CameraUniform};
 use crate::renderer::pipeline::{create_wgpu_render_pipeline, RenderPipeline, Vertex};
 use crate::renderer::texture::Texture;
 
@@ -9,6 +11,12 @@ pub struct Count(pub usize);
 pub(crate) fn counter(mut count: ResMut<Count>) {
     count.0 = count.0 + 1;
     println!("{}", count.0);
+}
+
+pub(crate) fn camera_control(mut query: Query<&mut Camera>, render_pipeline: ResMut<RenderPipeline>) {
+    for mut camera in query.iter_mut() {
+        camera.update();
+    }
 }
 
 pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
@@ -95,17 +103,57 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
     );
 
     let index_buffer = device.create_buffer_init(
-        &wgpu::util::BufferInitDescriptor {
+        &BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX
+            usage: BufferUsages::INDEX
         }
     );
+
+    let camera = Camera {
+        eye: (0.0, 1.0, 2.0).into(),
+        target: (0.0, 0.0, 0.0).into(),
+        up: Vec3::Y,
+        aspect: config.width as f32 / config.height as f32,
+        fov_y: 45.0,
+        z_near: 0.1,
+        z_far: 100.0,
+        uniform: CameraUniform::new()
+    };
+
+    let camera_matrix_buffer = device.create_buffer_init(&BufferInitDescriptor{
+        label: Some("Camera Buffer"),
+        contents: bytemuck::bytes_of(&camera.uniform.view_projection),
+        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST
+    });
+    
+    let camera_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+        label: Some("Camera Bind Group Layout"),
+        entries: &[BindGroupLayoutEntry {
+            binding: 0,
+            visibility: ShaderStages::VERTEX,
+            ty: BindingType::Buffer {
+                ty: BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None
+            },
+            count: None
+        }]
+    });
+
+    let camera_bind_group = device.create_bind_group(&BindGroupDescriptor {
+        label: Some("Camera Bind Group"),
+        layout: &camera_bind_group_layout,
+        entries: &[BindGroupEntry{
+            binding: 0,
+            resource: camera_matrix_buffer.as_entire_binding()
+        }]
+    });
 
 
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("Render Pipeline Layout"),
-        bind_group_layouts: &[&diffuse_bind_group_layout],
+        bind_group_layouts: &[&diffuse_bind_group_layout, &camera_bind_group_layout],
         push_constant_ranges: &[]
     });
 
@@ -120,17 +168,21 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
         wgpu_render_pipeline,
         vertex_buffer,
         index_buffer,
-        num_vertices: VERTICES.len() as u32,
         num_indices: INDICES.len() as u32,
         diffuse_bind_group,
         diffuse_bind_group_layout,
         diffuse_texture: texture,
+        camera_bind_group,
+        camera_bind_group_layout,
+        camera_buffer: camera_matrix_buffer
     };
 
     commands.insert_resource(render_pipeline);
+    commands.spawn().insert(camera);
 }
 
-pub(crate) fn render(surface: Res<Surface>, device: Res<Device>, queue: Res<Queue>, render_pipeline: Res<RenderPipeline>) {
+pub(crate) fn render(surface: Res<Surface>, device: Res<Device>, queue: Res<Queue>,
+                     render_pipeline: Res<RenderPipeline>, mut query: Query<&mut Camera>) {
     println!("Rendering...");
 
     let output = surface.get_current_texture().unwrap();
@@ -160,12 +212,15 @@ pub(crate) fn render(surface: Res<Surface>, device: Res<Device>, queue: Res<Queu
 
         render_pass.set_pipeline(&render_pipeline.wgpu_render_pipeline);
         render_pass.set_bind_group(0, &render_pipeline.diffuse_bind_group, &[]);
-        //render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
+        render_pass.set_bind_group(1, &render_pipeline.camera_bind_group, &[]);
         render_pass.set_vertex_buffer(0, render_pipeline.vertex_buffer.slice(..));
         render_pass.set_index_buffer(render_pipeline.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
         render_pass.draw_indexed(0..render_pipeline.num_indices, 0, 0..1);
     }
 
+    let camera = query.iter_mut().next().unwrap();
+
+    queue.write_buffer(&render_pipeline.camera_buffer, 0, bytemuck::bytes_of(&camera.uniform.view_projection));
     // submit will accept anything that implements IntoIter
     queue.submit(std::iter::once(encoder.finish()));
     output.present();
