@@ -1,3 +1,4 @@
+use bevy_ecs::event::Events;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -39,6 +40,10 @@ pub async fn run() {
                 .with_system(core::systems::renderer_startup)
         )
         .add_stage(
+            "first",
+            SystemStage::parallel()
+        )
+        .add_stage(
         "update",
        SystemStage::parallel()
            .with_system(core::systems::counter)
@@ -50,13 +55,15 @@ pub async fn run() {
                 .with_system(core::systems::render)
         );
 
+    world.init_resource::<Events<bevy_input::keyboard::KeyboardInput>>();
+    schedule.add_system_to_stage("first", Events::<bevy_input::keyboard::KeyboardInput>::update_system);
+
     event_loop.run(move |event, _, control_flow| match event {
         Event::MainEventsCleared => {
             schedule.run(&mut world);
             window.request_redraw();
         },
         Event::RedrawRequested(window_id) if window_id == window.id() => {
-            println!("RedrawRequested");
         },
         Event::WindowEvent {
             ref event,
@@ -73,6 +80,13 @@ pub async fn run() {
                     },
                     ..
                 } => *control_flow = ControlFlow::Exit,
+                WindowEvent::KeyboardInput {
+                    ref input,
+                    ..
+                } => {
+                    let mut keyboard_input_events =
+                        world_cell.get_resource_mut::<Events<bevy_input::keyboard::KeyboardInput>>().unwrap();
+                    keyboard_input_events.send(core::input::convert_winit_keyboard_input(input));                }
                 WindowEvent::Resized(new_size) => {
                     resize_window(world_cell, new_size)
                 },

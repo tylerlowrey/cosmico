@@ -98,6 +98,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "bevy_app"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32660ae99fa3498ca379de28b7e2f447e6531b0e432bf200901efeec075553c1"
+dependencies = [
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_reflect",
+ "bevy_utils",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "bevy_derive"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -139,6 +153,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_input"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff4ec4f6e38ef1b41ff68ec7badd6afc5c9699191e61e511c4abee91a5888afc"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_utils",
+]
+
+[[package]]
 name = "bevy_macro_utils"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -147,6 +173,16 @@ dependencies = [
  "cargo-manifest",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "bevy_math"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20288df0f70ff258bbaffaf55209f1271a7436438591bbffc3d81e4d84b423f2"
+dependencies = [
+ "bevy_reflect",
+ "glam",
 ]
 
 [[package]]
@@ -159,8 +195,10 @@ dependencies = [
  "bevy_utils",
  "downcast-rs",
  "erased-serde",
+ "glam",
  "parking_lot",
  "serde",
+ "smallvec",
  "thiserror",
 ]
 
@@ -471,6 +509,7 @@ name = "cosmico"
 version = "0.1.0"
 dependencies = [
  "bevy_ecs",
+ "bevy_input",
  "bytemuck",
  "env_logger",
  "glam",
@@ -800,6 +839,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3412e74893a912839a67e975aca0c88561e20e5461d2d358a5fa6d3b229fae59"
 dependencies = [
  "bytemuck",
+ "serde",
 ]
 
 [[package]]
@@ -1565,12 +1605,15 @@ name = "serde"
 version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce31e24b01e1e524df96f1c2fdd054405f8d7376249a5110886fb4b658484789"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.137"
+version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
+checksum = "08597e7152fcd306f41838ed3e37be9eaeed2b61c42e2117266a554fab4662f9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1597,6 +1640,9 @@ name = "smallvec"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "smithay-client-toolkit"

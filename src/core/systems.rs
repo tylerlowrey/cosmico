@@ -1,4 +1,5 @@
 use bevy_ecs::prelude::*;
+use bevy_input::keyboard::{KeyboardInput, KeyCode};
 use glam::Vec3;
 use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, Queue, ShaderStages, Surface, SurfaceConfiguration};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
@@ -8,21 +9,38 @@ use crate::renderer::texture::Texture;
 
 pub struct Count(pub usize);
 
-pub(crate) fn counter(mut count: ResMut<Count>) {
+pub(crate) fn counter(mut count: ResMut<Count>, mut input_events: EventReader<KeyboardInput>) {
     count.0 = count.0 + 1;
-    println!("{}", count.0);
+    let mut num_events = 0;
+    for event in input_events.iter() {
+        match event.key_code.unwrap() {
+            KeyCode::W => println!("Key event: W"),
+            KeyCode::A => println!("Key event: A"),
+            KeyCode::S => println!("Key event: S"),
+            KeyCode::D => println!("Key event: D"),
+            KeyCode::Return => println!("Key event: Return"),
+            _ => println!("Unknown key event")
+        }
+        num_events += 1;
+    }
+
+    if num_events > 0 {
+        println!("Num events: {}", num_events);
+    }
 }
 
-pub(crate) fn camera_control(mut query: Query<&mut Camera>, render_pipeline: ResMut<RenderPipeline>) {
+pub(crate) fn camera_control(mut query: Query<&mut Camera>, mut input_events: EventReader<KeyboardInput> ) {
+    let mut key_inputs = Vec::new();
+    for event in input_events.iter() {
+        key_inputs.push(event.key_code.unwrap_or(KeyCode::Return))
+    }
     for mut camera in query.iter_mut() {
-        camera.update();
+        camera.update(&key_inputs);
     }
 }
 
 pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
                                queue: Res<Queue>, config: Res<SurfaceConfiguration>) {
-    println!("Renderer starting up...");
-
     let texture = Texture::from_bytes(
         &device,
         &queue,
@@ -118,6 +136,7 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
         fov_y: 45.0,
         z_near: 0.1,
         z_far: 100.0,
+        speed: 0.1,
         uniform: CameraUniform::new()
     };
 
@@ -183,8 +202,6 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
 
 pub(crate) fn render(surface: Res<Surface>, device: Res<Device>, queue: Res<Queue>,
                      render_pipeline: Res<RenderPipeline>, mut query: Query<&mut Camera>) {
-    println!("Rendering...");
-
     let output = surface.get_current_texture().unwrap();
     let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
     let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
