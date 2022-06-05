@@ -1,8 +1,7 @@
 use glam::{Mat4, Vec3};
 use bytemuck::{ Pod, Zeroable };
-use winit::event::{ElementState,  WindowEvent};
 use bevy_ecs::prelude::*;
-use bevy_input::keyboard::{KeyboardInput, KeyCode};
+use bevy_input::keyboard::{KeyCode};
 
 #[derive(Component)]
 pub struct Camera {
@@ -30,24 +29,24 @@ impl Camera {
         return projection * view;
     }
 
-    pub fn update(&mut self, key_inputs: &Vec<KeyCode>) {
+    pub fn update(&mut self, key_inputs: &Vec<KeyCode>, delta_time: f32) {
         for key_code in key_inputs {
             let forward = self.target - self.eye;
             let forward_normalized = forward.normalize();
             if *key_code == KeyCode::W {
-                self.eye += forward_normalized * self.speed
+                self.eye += forward_normalized * self.speed * delta_time
             }
             if *key_code == KeyCode::S {
-                self.eye -= forward_normalized * self.speed
+                self.eye -= forward_normalized * self.speed * delta_time
             }
 
             let forward = self.target - self.eye;
-            let right = forward.cross(self.up);
+            let right = forward.normalize().cross(self.up);
             if *key_code == KeyCode::A {
-                self.eye -= right * self.speed;
+                self.eye -= right * self.speed * delta_time;
             }
             if *key_code == KeyCode::D {
-                self.eye += right * self.speed;
+                self.eye += right * self.speed * delta_time;
             }
         }
         self.uniform.view_projection = self.build_view_projection_matrix();

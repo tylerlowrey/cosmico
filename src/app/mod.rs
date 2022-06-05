@@ -11,6 +11,7 @@ use bevy_ecs::world::WorldCell;
 use wgpu::{Device, Surface, SurfaceConfiguration};
 use winit::dpi::PhysicalSize;
 use crate::core;
+use crate::core::time::Time;
 use crate::renderer;
 
 pub async fn run() {
@@ -18,8 +19,8 @@ pub async fn run() {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
     window.set_fullscreen(Some(Fullscreen::Borderless(None)));
-    window.set_cursor_grab(true);
-    window.set_cursor_visible(true);
+    window.set_cursor_grab(true).expect("Unable to grab cursor");
+    window.set_cursor_visible(false);
 
     let (instance, surface, adapter, size) = pollster::block_on(renderer::initialize_wgpu(&window));
     let (device, queue, config) = pollster::block_on(renderer::initialize_renderer(&adapter, &surface, &size));
@@ -31,6 +32,8 @@ pub async fn run() {
     world.insert_resource(queue);
     world.insert_resource(surface);
     world.insert_resource(config);
+    world.init_resource::<Time>();
+    world.init_resource::<Events<bevy_input::keyboard::KeyboardInput>>();
     let mut schedule = Schedule::default();
     schedule
         .add_stage(
@@ -42,6 +45,8 @@ pub async fn run() {
         .add_stage(
             "first",
             SystemStage::parallel()
+                .with_system(core::time::time_system)
+                .with_system(Events::<bevy_input::keyboard::KeyboardInput>::update_system)
         )
         .add_stage(
         "update",
@@ -54,9 +59,6 @@ pub async fn run() {
             SystemStage::parallel()
                 .with_system(core::systems::render)
         );
-
-    world.init_resource::<Events<bevy_input::keyboard::KeyboardInput>>();
-    schedule.add_system_to_stage("first", Events::<bevy_input::keyboard::KeyboardInput>::update_system);
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::MainEventsCleared => {

@@ -3,6 +3,7 @@ use bevy_input::keyboard::{KeyboardInput, KeyCode};
 use glam::Vec3;
 use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, Queue, ShaderStages, Surface, SurfaceConfiguration};
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use crate::core::time::Time;
 use crate::renderer::camera::{Camera, CameraUniform};
 use crate::renderer::pipeline::{create_wgpu_render_pipeline, RenderPipeline, Vertex};
 use crate::renderer::texture::Texture;
@@ -18,7 +19,9 @@ pub(crate) fn counter(mut count: ResMut<Count>, mut input_events: EventReader<Ke
             KeyCode::A => println!("Key event: A"),
             KeyCode::S => println!("Key event: S"),
             KeyCode::D => println!("Key event: D"),
-            KeyCode::Return => println!("Key event: Return"),
+            KeyCode::Return => {
+                println!("Key event: Return")
+            },
             _ => println!("Unknown key event")
         }
         num_events += 1;
@@ -29,13 +32,13 @@ pub(crate) fn counter(mut count: ResMut<Count>, mut input_events: EventReader<Ke
     }
 }
 
-pub(crate) fn camera_control(mut query: Query<&mut Camera>, mut input_events: EventReader<KeyboardInput> ) {
+pub(crate) fn camera_control(mut query: Query<&mut Camera>, mut input_events: EventReader<KeyboardInput>, time: Res<Time>) {
     let mut key_inputs = Vec::new();
     for event in input_events.iter() {
         key_inputs.push(event.key_code.unwrap_or(KeyCode::Return))
     }
     for mut camera in query.iter_mut() {
-        camera.update(&key_inputs);
+        camera.update(&key_inputs, time.delta_seconds);
     }
 }
 
@@ -49,24 +52,24 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
     ).unwrap();
 
     let diffuse_bind_group_layout = device.create_bind_group_layout(
-        &wgpu::BindGroupLayoutDescriptor {
+        &BindGroupLayoutDescriptor {
             entries: &[
-                wgpu::BindGroupLayoutEntry {
+                BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
+                    visibility: ShaderStages::FRAGMENT,
+                    ty: BindingType::Texture {
                         multisampled: false,
                         view_dimension: wgpu::TextureViewDimension::D2,
                         sample_type: wgpu::TextureSampleType::Float { filterable: true },
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT,
                     // This should match the filterable field of the
                     // corresponding Texture entry above.
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    ty: BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                     count: None,
                 },
             ],
@@ -75,14 +78,14 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
     );
 
     let diffuse_bind_group = device.create_bind_group(
-        &wgpu::BindGroupDescriptor {
+        &BindGroupDescriptor {
             layout: &diffuse_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                BindGroupEntry {
                     binding: 0,
                     resource: wgpu::BindingResource::TextureView(&texture.view),
                 },
-                wgpu::BindGroupEntry {
+                BindGroupEntry {
                     binding: 1,
                     resource: wgpu::BindingResource::Sampler(&texture.sampler),
                 }
@@ -113,7 +116,7 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
     ];
 
     let vertex_buffer = device.create_buffer_init(
-        &wgpu::util::BufferInitDescriptor {
+        &BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(VERTICES),
             usage: wgpu::BufferUsages::VERTEX
@@ -136,7 +139,7 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
         fov_y: 45.0,
         z_near: 0.1,
         z_far: 100.0,
-        speed: 0.1,
+        speed: 10.0,
         uniform: CameraUniform::new()
     };
 

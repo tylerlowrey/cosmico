@@ -1,6 +1,5 @@
 use wgpu::{Device, PipelineLayout, ShaderModule, VertexAttribute, vertex_attr_array};
 use bytemuck::{ Pod, Zeroable };
-use glam::Mat4;
 use crate::renderer::texture::Texture;
 
 #[repr(C)]
