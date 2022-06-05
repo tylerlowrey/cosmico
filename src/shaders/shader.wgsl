@@ -10,6 +10,13 @@ struct VertexInput {
     [[location(1)]] texture_coordinates: vec2<f32>;
 };
 
+struct InstanceInput {
+    [[location(5)]] matrix_column_0: vec4<f32>;
+    [[location(6)]] matrix_column_1: vec4<f32>;
+    [[location(7)]] matrix_column_2: vec4<f32>;
+    [[location(8)]] matrix_column_3: vec4<f32>;
+};
+
 struct VertexOutput {
     [[builtin(position)]] clip_position: vec4<f32>;
     [[location(0)]] texture_coordinates: vec2<f32>;
@@ -17,11 +24,19 @@ struct VertexOutput {
 
 [[stage(vertex)]]
 fn vertex_shader_main(
-    model: VertexInput
+    model: VertexInput,
+    instance: InstanceInput
 ) -> VertexOutput {
+    let instance_matrix = mat4x4<f32>(
+        instance.matrix_column_0,
+        instance.matrix_column_1,
+        instance.matrix_column_2,
+        instance.matrix_column_3
+    );
+
     var outVertex: VertexOutput;
     outVertex.texture_coordinates = model.texture_coordinates;
-    outVertex.clip_position = camera.view_projection_matrix * vec4<f32>(model.position, 1.0);
+    outVertex.clip_position = camera.view_projection_matrix * instance_matrix * vec4<f32>(model.position, 1.0);
     return outVertex;
 }
 

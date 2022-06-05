@@ -5,6 +5,7 @@ use wgpu::{BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindG
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use crate::core::time::Time;
 use crate::renderer::camera::{Camera, CameraUniform};
+use crate::renderer::instance::Instance;
 use crate::renderer::pipeline::{create_wgpu_render_pipeline, RenderPipeline, Vertex};
 use crate::renderer::texture::Texture;
 
@@ -131,6 +132,16 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
         }
     );
 
+    let instances = Instance::raw_test_instances();
+
+    let instance_buffer = device.create_buffer_init(
+        &BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(&instances),
+            usage: BufferUsages::VERTEX
+        }
+    );
+
     let camera = Camera {
         eye: (0.0, 1.0, 2.0).into(),
         target: (0.0, 0.0, 0.0).into(),
@@ -191,6 +202,8 @@ pub(crate) fn renderer_startup(mut commands: Commands, device: Res<Device>,
         vertex_buffer,
         index_buffer,
         num_indices: INDICES.len() as u32,
+        instances,
+        instance_buffer,
         diffuse_bind_group,
         diffuse_bind_group_layout,
         diffuse_texture: texture,
@@ -234,8 +247,9 @@ pub(crate) fn render(surface: Res<Surface>, device: Res<Device>, queue: Res<Queu
         render_pass.set_bind_group(0, &render_pipeline.diffuse_bind_group, &[]);
         render_pass.set_bind_group(1, &render_pipeline.camera_bind_group, &[]);
         render_pass.set_vertex_buffer(0, render_pipeline.vertex_buffer.slice(..));
+        render_pass.set_vertex_buffer(1, render_pipeline.instance_buffer.slice(..));
         render_pass.set_index_buffer(render_pipeline.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(0..render_pipeline.num_indices, 0, 0..1);
+        render_pass.draw_indexed(0..render_pipeline.num_indices, 0, 0..render_pipeline.instances.len() as u32);
     }
 
     let camera = query.iter_mut().next().unwrap();

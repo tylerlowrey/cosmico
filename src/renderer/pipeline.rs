@@ -1,5 +1,6 @@
 use wgpu::{Device, PipelineLayout, ShaderModule, VertexAttribute, vertex_attr_array};
 use bytemuck::{ Pod, Zeroable };
+use crate::renderer::instance::{Instance, InstanceRaw};
 use crate::renderer::texture::Texture;
 
 #[repr(C)]
@@ -25,6 +26,8 @@ pub struct RenderPipeline {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_indices: u32,
+    pub instances: Vec<InstanceRaw>,
+    pub instance_buffer: wgpu::Buffer,
     pub diffuse_bind_group: wgpu::BindGroup,
     pub diffuse_bind_group_layout: wgpu::BindGroupLayout,
     pub diffuse_texture: Texture,
@@ -41,7 +44,7 @@ pub fn create_wgpu_render_pipeline(pipeline_layout: PipelineLayout, shader: Shad
         vertex: wgpu::VertexState {
             module: &shader,
             entry_point: "vertex_shader_main",
-            buffers: &[Vertex::buffer_layout_description()],
+            buffers: &[Vertex::buffer_layout_description(), InstanceRaw::buffer_layout_description()],
         },
         fragment: Some(wgpu::FragmentState {
             module: &shader,
