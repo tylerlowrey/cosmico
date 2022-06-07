@@ -18,12 +18,12 @@ impl Instance {
 
     pub fn raw_test_instances() -> Vec<InstanceRaw> {
         let test_instances: [Instance; 6] = [
-            Instance { position: Vec3::new(0.0, 0.0, 1.0), rotation: Quat::from_rotation_x(PI * 1.0) },
-            Instance { position: Vec3::new(1.0, 0.0, 0.0), rotation: Quat::from_rotation_x(PI * 0.5) },
-            Instance { position: Vec3::new(-1.0, 0.0, 0.0), rotation: Quat::from_rotation_y(PI * 1.0) },
-            Instance { position: Vec3::new(0.0, 0.0, -1.0), rotation: Quat::from_rotation_y(PI * 0.5) },
-            Instance { position: Vec3::new(1.0, 0.0, 1.0), rotation: Quat::from_rotation_z(PI * 1.0) },
-            Instance { position: Vec3::new(-1.0, 0.0, -1.0), rotation: Quat::from_rotation_z(PI * 0.5) },
+            Instance { position: Vec3::new(0.0, 0.0, 2.0), rotation: Quat::from_rotation_x(PI * 1.0) },
+            Instance { position: Vec3::new(2.0, 0.0, 0.0), rotation: Quat::from_rotation_x(PI * 0.5) },
+            Instance { position: Vec3::new(-2.0, 0.0, 0.0), rotation: Quat::from_rotation_y(PI * 1.0) },
+            Instance { position: Vec3::new(0.0, 0.0, -2.0), rotation: Quat::from_rotation_y(PI * 0.5) },
+            Instance { position: Vec3::new(2.0, 0.0, 2.0), rotation: Quat::from_rotation_z(PI * 1.0) },
+            Instance { position: Vec3::new(-2.0, 0.0, -2.0), rotation: Quat::from_rotation_z(PI * 0.5) },
         ];
         test_instances.iter().map(Instance::to_raw_instance).collect()
     }

@@ -1,39 +1,21 @@
-use wgpu::{Device, PipelineLayout, ShaderModule, VertexAttribute, vertex_attr_array};
-use bytemuck::{ Pod, Zeroable };
-use crate::renderer::instance::{Instance, InstanceRaw};
+use wgpu::{Device, PipelineLayout, ShaderModule};
+
+use crate::renderer::instance::{InstanceRaw};
+use crate::renderer::model::{ModelVertex};
 use crate::renderer::texture::Texture;
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug, Pod, Zeroable)]
-pub struct Vertex {
-    pub position: [f32; 3],
-    pub texture_coordinates: [f32; 2]
-}
-
-impl Vertex {
-    const VERTEX_BUFFER_ATTRIBUTES: [VertexAttribute; 2] = vertex_attr_array![0 => Float32x3, 1 => Float32x2];
-    fn buffer_layout_description<'a>() -> wgpu::VertexBufferLayout<'a> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &Self::VERTEX_BUFFER_ATTRIBUTES
-        }
-    }
+pub trait Vertex {
+    fn buffer_layout_description<'a>() -> wgpu::VertexBufferLayout<'a>;
 }
 
 pub struct RenderPipeline {
     pub wgpu_render_pipeline: wgpu::RenderPipeline,
-    pub vertex_buffer: wgpu::Buffer,
-    pub index_buffer: wgpu::Buffer,
-    pub num_indices: u32,
-    pub instances: Vec<InstanceRaw>,
-    pub instance_buffer: wgpu::Buffer,
-    pub diffuse_bind_group: wgpu::BindGroup,
     pub diffuse_bind_group_layout: wgpu::BindGroupLayout,
-    pub diffuse_texture: Texture,
-    pub camera_bind_group: wgpu::BindGroup,
+    pub depth_texture: Texture,
     pub camera_bind_group_layout: wgpu::BindGroupLayout,
-    pub camera_buffer: wgpu::Buffer
+    pub world_transform_bind_group_layout: wgpu::BindGroupLayout,
+    pub world_transform_bind_group: wgpu::BindGroup,
+    pub world_transform_buffer: wgpu::Buffer
 }
 
 pub fn create_wgpu_render_pipeline(pipeline_layout: PipelineLayout, shader: ShaderModule, device: &Device,
@@ -44,7 +26,7 @@ pub fn create_wgpu_render_pipeline(pipeline_layout: PipelineLayout, shader: Shad
         vertex: wgpu::VertexState {
             module: &shader,
             entry_point: "vertex_shader_main",
-            buffers: &[Vertex::buffer_layout_description(), InstanceRaw::buffer_layout_description()],
+            buffers: &[ModelVertex::buffer_layout_description()],
         },
         fragment: Some(wgpu::FragmentState {
             module: &shader,
@@ -67,7 +49,13 @@ pub fn create_wgpu_render_pipeline(pipeline_layout: PipelineLayout, shader: Shad
             // Requires Features::CONSERVATIVE_RASTERIZATION
             conservative: false,
         },
-        depth_stencil: None,
+        depth_stencil: Some(wgpu::DepthStencilState {
+            format: Texture::DEPTH_FORMAT,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::Less,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default()
+        }),
         multisample: wgpu::MultisampleState {
             count: 1,
             mask: !0,

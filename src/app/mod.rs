@@ -10,9 +10,11 @@ use bevy_ecs::schedule::RunOnce;
 use bevy_ecs::world::WorldCell;
 use wgpu::{Device, Surface, SurfaceConfiguration};
 use winit::dpi::PhysicalSize;
-use crate::core;
+use crate::{core, game};
 use crate::core::time::Time;
 use crate::renderer;
+
+pub const ASSETS_DIR: &str = "assets";
 
 pub async fn run() {
     env_logger::init();
@@ -23,7 +25,7 @@ pub async fn run() {
     window.set_cursor_visible(false);
 
     let (instance, surface, adapter, size) = pollster::block_on(renderer::initialize_wgpu(&window));
-    let (device, queue, config) = pollster::block_on(renderer::initialize_renderer(&adapter, &surface, &size));
+    let (device, queue, surface_config) = pollster::block_on(renderer::initialize_renderer(&adapter, &surface, &size));
 
     let mut world = World::new();
     world.insert_resource(core::systems::Count(0));
@@ -31,16 +33,22 @@ pub async fn run() {
     world.insert_resource(device);
     world.insert_resource(queue);
     world.insert_resource(surface);
-    world.insert_resource(config);
+    world.insert_resource(surface_config);
     world.init_resource::<Time>();
     world.init_resource::<Events<bevy_input::keyboard::KeyboardInput>>();
     let mut schedule = Schedule::default();
     schedule
         .add_stage(
-            "startup",
+            "engine_startup",
             SystemStage::parallel()
                 .with_run_criteria(RunOnce::default())
                 .with_system(core::systems::renderer_startup)
+        )
+        .add_stage(
+            "game_startup",
+            SystemStage::parallel()
+                .with_run_criteria(RunOnce::default())
+                .with_system(game::start)
         )
         .add_stage(
             "first",

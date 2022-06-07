@@ -13,7 +13,9 @@ pub struct Camera {
     pub z_near: f32,
     pub z_far: f32,
     pub uniform: CameraUniform,
-    pub speed: f32
+    pub speed: f32,
+    pub buffer: wgpu::Buffer,
+    pub bind_group: wgpu::BindGroup
 }
 
 impl Camera {
@@ -64,9 +66,5 @@ impl CameraUniform {
         Self {
             view_projection: Mat4::IDENTITY
         }
-    }
-
-    pub fn update_view_projection(&mut self, camera: &Camera) {
-        self.view_projection = camera.build_view_projection_matrix();
     }
 }

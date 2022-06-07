@@ -16,3 +16,7 @@ image = "0.24.1"
 glam = { version = "0.20.2", features = ["bytemuck"] }
 bevy_ecs = "0.7.0"
 bevy_input = "0.7.0"
+tobj = "3.2.2"
+
+[build-dependencies]
+fs_extra = "1.2.0"
