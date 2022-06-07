@@ -90,7 +90,7 @@ impl<'a, 'b: 'a> DrawModel<'b> for wgpu::RenderPass<'a> {
             self.set_bind_group(0, &model.materials[mesh.material_index].bind_group, &[]);
             self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
             //render_pass.set_vertex_buffer(1, render_pipeline.instance_buffer.slice(..));
-            self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
             self.draw_indexed(0..mesh.num_vertices as u32, 0, 0..1);
         }
     }
